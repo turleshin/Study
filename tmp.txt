@@ -1,0 +1,71 @@
+Tính đóng gói encapsualtion:
+
+- Cơ chế che giấu thông tin bằng cách gom các dữ liệu, thuộc tính vào 1 unit là class và giới hạn quyền truy cập thông qua access modifier
+- Đảm bảo tính toàn vẹn dữ liệu khỏi các đối tượng bên ngoài.
+- ứng dụng vào việc tách biệt public interface ra ngoài và private method xử lý nội bộ trong class.
+- Dùng const cho các method k tác động vào data(getter)
+- Dùng mutable cho các biến mình muốn thay đổi trong const method, thường là mutex.
+
+Tính trừu tượng abtraction:
+
+- Giarm thiểu các định nghĩa chi rườm ra(implementation) chỉ đưa ra bản chất của vấn đề(interface), giúp đơn giản hóa vấn đề, tập trung vào what mà ko phải how.
+- Ứng dụng vào việc tạo các abstract class, là những class chứa ít nhất 1 pure virtual function
+- Các class con kế thừa phải tự implement các memthod của pure virtual function.
+- Các class có virtual function bắt buộc phải có virtual destructor, điều này giúp tránh memory leak khi gọi hàm hủy của class base.
+
+Tính kế thừa inheritance:
+- Cơ chết cho phép 1 class có thể kế thừa thuộc tính, method của class khác, tạo ra mối quan hệ is-a.
+- giải quyết vấn đề reuse code, extensiblity, là tiền đề cho tính đa hình polymorphism.
+- 1 class có thể kế thừa 1 hoặc nhiều class, có thể kế thừa nhiều level eg: A kế thừa B, C kế thừa A.
+- Diamond problem: khi 1 class kế thừa  nhiều level sẽ tạo ra nhiều instance của class base -> giải pháp là sử dụng virtual inheritance: class A : virtual public B
+- Rule of 5 nếu 1 trong 5 hàm sau tự define thì hãy define tất cả: destructor, copy contructor, copy assignment, move constructor, move assignment.
+- Rule of Zero:  nếu sử dụng smart pointer: k định nghĩa 5 hàm trên, để compiler tự làm việc 
+- Khi không cho phép class khác kế thừa -> sử dụng từ khóa final
+- Dùng từ khóa override cho các hàm virtual từ C++11
+
+Tính đa hình Polymorphism
+
+- Cơ chế cùng 1 method nhưng có thể có nhiều phiên bản khác nhau ở mỗi class.
+- Tính đa hình có 2 cách thể hiện: compile time và run time 
+- compile: function/operator overloading hoặc là template programing
+- run time: thể hiện qua virtual funtion(vtable) để quyết định method nào được gọi tại runtime. Dynamic biding: dự vào thực thể gọi hàm tại runtime để quyết định hàm gọi.
+
+Single Responsibility: Mỗi class có một nhiệm vụ rõ ràng
+Open/Closed: Mở rộng bằng inheritance, không sửa base class
+Liskov Substitution: Derived class thay thế được base class
+Interface Segregation: Interface nhỏ, tập trung (ISystem, ISerializable)
+Dependency Inversion: Phụ thuộc vào abstraction (ISystem*), không phụ thuộc concrete class
+
+Vtable và vptr.
+Mỗi class khi compile, compiler sẽ tự động thêm các vtable là 1  static array của  function pointer các hàm virtual của class đó.
+vptr là pointer trở đến vtable đó.
+Tại runtime, khi 1 hàm được gọi, vptr sẽ truy cập đến vtable, tìm kiếm các hàm trong đó, lấy địa chỉ của hàm implement là sử dụng trong function call.
+-> điều này giúp dynamic biding at runtime tuy nhiên sẽ tốn thời gian hơn so với early biding.
+
+1.Giải thích sự khác biệt giữa shallow copy và deep copy. Khi nào cần implement custom copy constructor? Trong code của bạn, NEVSystemProperty có cần deep copy không và tại sao?
+Shallow copy là việc copy giá trị của pointer hoặc reference trỏ tới instance của class. Shallow copy k thực sự tạo mới 1 object mà chỉ copy thông qua con trỏ trỏ tới object của class đó. Nếu object ban đầu có sự thay đổi sẽ dẫn đến việc copy object bị thay đổi
+Deep copy là copy thật sự object đó và tạo mới 1 object có địa chỉ khác object ban đầu trên bộ nhớ. Thay đổi của object ban đầu không ảnh hưởng đến copy object vì chúng nằm tại 2 địa chỉ khác nhau.
+Khi nào thì cần custom copy constructor: khi class có quản lý tài nguyên hệ thống : file, có raw pointer
+Khi nào có thể dùng defautl: tài nguyên là pod type, copyable, smartpointer: shared_ptr tăng refcount, unique_ptr thì k copy dc.
+Mutex, atomic là các biến liên quan đến OS resource, là noncopyable.
+
+2. Object slicing là gì ? Cần làm gì để tránh?
+Object Slicing là hiện tượng mất dữ liệu và behavior khi copy object của derived class vào object của base class theo giá trị. Khi đó, phần derived-specific bị "cắt bỏ", chỉ còn phần base class. 
+Slicing phá hủy polymorphism vì object trở thành base type thực sự, không còn derived type.
+Cách tránh: sử dụng pointer, pass by ref, delete copy constructor trong base class.
+
+3.Giải thích Name Hiding trong inheritance. Tại sao code này không compile?
+Name Hiding là hiện tượng xảy ra khi mà class con implement 1 hàm có cùng tên với class cha thì tất cả các overload version(khác params) của function đó ở class cha sẽ bị hide đối với class con.
+Vì sao có điều này? là do cơ chết tìm kiếm function của compiler, Tìm theo tên function ở current scope -> chọn best match về param -> Kiểm tra access modifier.
+Vậy tức là khi tìm thấy hàm trong scope của class con thì compiler sẽ dừng và k tìm trong class cha nữa.
+Nếu vẫn muốn dùng các overload function của class cha thì sao? thì phải define lại hàm 1 cách tường minh hoặc dùng using Base::foo;
+
+4.Virtual function call trong constructor/destructor - Có hoạt động không? Tại sao nguy hiểm?
+5.Private Inheritance vs Composition - Khi nào dùng cái nào? Cho ví dụ thực tế.
+6.VTable layout chi tiết:
+7.Virtual function optimization - Compiler có thể devirtualize khi nào? Cho ví dụ?
+8.Perfect Forwarding và Universal References?
+9.Template Specialization vs Overriding
+- Template được resolve ở compile time, mỗi type khác nhau sẽ sinh ra 1 class riêng biệt, không có tính inheritance giữa các class. Nếu muốn phải tự thêm.
+- Tại complie time, comipler sẽ generate code cho từng class ứng với từng type khác nhau.
+- Overriding resolve ở runtime dựa vào vtable.
